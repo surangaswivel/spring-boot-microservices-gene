@@ -1,0 +1,33 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: document-service
+          uri: http://localhost:8070/
+          predicates:
+            - Path=/api/doc-service/**
+
+
+  application:
+    name: api-gateway
+  security:
+    oauth2:
+      resource-server:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/spring-boot-microservices-realm
+app:
+  eureka-server: localhost
+server:
+  port: '8181'
+logging:
+  pattern:
+    level: '%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka:password@localhost:8761/eureka

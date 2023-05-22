@@ -1,0 +1,32 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/jwt_security
+    username: postgres
+    password: root123
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+  application:
+    name: document-service
+server:
+  port: '8070'
+logging:
+  pattern:
+    level: '%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka:password@localhost:8761/eureka
