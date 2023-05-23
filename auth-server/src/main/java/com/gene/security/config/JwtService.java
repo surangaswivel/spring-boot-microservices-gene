@@ -60,9 +60,9 @@ public class JwtService {
     claims.put("permissions" , userDetails.getAuthorities() );
     return Jwts
             .builder()
-            .setClaims(extraClaims)
             .setSubject(userDetails.getUsername())
-          //  .setClaims(claims)
+            .setClaims(claims)
+            .setClaims(extraClaims)
             .setIssuedAt(new Date(System.currentTimeMillis()))
             .setExpiration(new Date(System.currentTimeMillis() + expiration))
             .signWith(getSignInKey(), SignatureAlgorithm.HS256)
