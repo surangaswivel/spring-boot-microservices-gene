@@ -5,8 +5,10 @@ import org.json.JSONObject;
 import org.keycloak.KeycloakPrincipal;
 import org.keycloak.KeycloakSecurityContext;
 import org.keycloak.representations.IDToken;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.ServerWebExchangeDecorator;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
@@ -59,8 +61,23 @@ public class KeyCloakTokenFilter implements WebFilter {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        exchange.getRequest().getHeaders().set("Authorization","Bearer "+token);
-        return chain.filter(exchange);
+        ServerWebExchange originalExchange = exchange;
+
+// Create a new HttpHeaders instance with the desired modifications
+        HttpHeaders modifiedHeaders = new HttpHeaders();
+        modifiedHeaders.putAll(originalExchange.getRequest().getHeaders());  // Copy existing headers
+        modifiedHeaders.remove("Authorization");
+        modifiedHeaders.add("Authorization", "Bearer "+token);  // Add a custom header
+
+// Create a new ServerWebExchangeDecorator with the modified headers
+        ServerWebExchange modifiedExchange = new ServerWebExchangeDecorator(originalExchange) {
+
+            public HttpHeaders getRequestHeaders() {
+                return modifiedHeaders;
+            }
+        };
+     //   exchange.getRequest().getHeaders().set("Authorization","Bearer "+token);
+        return chain.filter(modifiedExchange);
     }
 
 
