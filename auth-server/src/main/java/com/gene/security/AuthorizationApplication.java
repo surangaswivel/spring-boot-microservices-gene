@@ -34,7 +34,7 @@ public class AuthorizationApplication {
 			var admin = RegisterRequest.builder()
 					.firstname("Admin")
 					.lastname("Admin")
-					.email("admin@mail.com")
+					.email("surangakumarage@gmail.com")
 					.password("password")
 					.roles(adminRoles)
 					.build();

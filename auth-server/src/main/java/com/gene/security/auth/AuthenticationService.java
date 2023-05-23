@@ -103,6 +103,7 @@ public class AuthenticationService {
     refreshToken = authHeader.substring(7);
     userEmail = jwtService.extractUsername(refreshToken);
     if (userEmail != null) {
+      // TODO: load from DB of auth service
       var user = this.repository.findByEmail(userEmail)
               .orElseThrow();
       if (jwtService.isTokenValid(refreshToken, user)) {
