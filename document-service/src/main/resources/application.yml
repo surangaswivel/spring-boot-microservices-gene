@@ -21,6 +21,11 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
   application:
     name: document-service
+  security:
+    oauth2:
+      resource-server:
+        jwt:
+          issuer-uri: http://localhost:8089/auth/realms/gene-project
 server:
   port: '8070'
 logging:
