@@ -26,6 +26,10 @@ spring:
       resource-server:
         jwt:
           issuer-uri: http://localhost:8089/auth/realms/gene-project
+          jwk-set-uri: http://localhost:8089/auth/realms/gene-project/protocol/openid-connect/certs
+#  main:
+#    allow-circular-references: true
+#    allow-bean-definition-overriding: true
 server:
   port: '8070'
 logging:
@@ -35,3 +39,7 @@ eureka:
   client:
     serviceUrl:
       defaultZone: http://eureka:password@localhost:8761/eureka
+application:
+  security:
+    jwt:
+      secret-key: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970

@@ -15,7 +15,8 @@ public class SecurityConfig {
     public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity serverHttpSecurity) {
         serverHttpSecurity
                 .addFilterAfter(new KeyCloakTokenFilter(), SecurityWebFiltersOrder.LAST)
-        .authorizeExchange(exchange -> exchange.anyExchange().authenticated())
+                .authorizeExchange(exchange -> exchange.pathMatchers("/api/doc-service/sayHelloPublic").permitAll()
+                        .anyExchange().authenticated())
                 .oauth2ResourceServer(ServerHttpSecurity.OAuth2ResourceServerSpec::jwt);
 
         serverHttpSecurity.csrf().disable();

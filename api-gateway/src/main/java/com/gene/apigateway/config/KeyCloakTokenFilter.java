@@ -1,14 +1,12 @@
 package com.gene.apigateway.config;
 
-import jakarta.ws.rs.core.Context;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.json.JSONObject;
-import org.keycloak.KeycloakPrincipal;
-import org.keycloak.KeycloakSecurityContext;
-import org.keycloak.representations.IDToken;
-import org.springframework.http.HttpHeaders;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.server.ServerWebExchange;
-import org.springframework.web.server.ServerWebExchangeDecorator;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
@@ -18,14 +16,15 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.security.Principal;
+import java.util.Arrays;
+import java.util.List;
 
-public class KeyCloakTokenFilter implements WebFilter {
-    @Context
+public class KeyCloakTokenFilter extends OncePerRequestFilter implements WebFilter {
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
 
-        String token = "" ;
+        String token = "";
 
         try {
             // Create the URL object with the endpoint URL
@@ -62,24 +61,22 @@ public class KeyCloakTokenFilter implements WebFilter {
             e.printStackTrace();
         }
         ServerWebExchange originalExchange = exchange;
-
-// Create a new HttpHeaders instance with the desired modifications
-        HttpHeaders modifiedHeaders = new HttpHeaders();
-        modifiedHeaders.putAll(originalExchange.getRequest().getHeaders());  // Copy existing headers
-        modifiedHeaders.remove("Authorization");
-        modifiedHeaders.add("Authorization", "Bearer "+token);  // Add a custom header
-
-// Create a new ServerWebExchangeDecorator with the modified headers
-        ServerWebExchange modifiedExchange = new ServerWebExchangeDecorator(originalExchange) {
-
-            public HttpHeaders getRequestHeaders() {
-                return modifiedHeaders;
-            }
-        };
-     //   exchange.getRequest().getHeaders().set("Authorization","Bearer "+token);
-        return chain.filter(modifiedExchange);
+        exchange.getRequest().mutate().header("Access_Token", "Bearer " + token);
+//        exchange.getRequest().getHeaders().add("Access_Token", "Bearer ");
+//        exchange.getRequest().getHeaders().add("Access_Token", "Bearer " + token);
+        return chain.filter(exchange);
     }
 
 
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String[] requests = {"/api/doc-service/sayHelloPublic"};
+        List<String> requestList = Arrays.asList(requests);
+        return requestList.contains(request.getServletPath());
+    }
 }

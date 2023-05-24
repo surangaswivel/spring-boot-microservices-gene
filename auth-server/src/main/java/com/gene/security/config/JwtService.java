@@ -1,17 +1,18 @@
 package com.gene.security.config;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import java.security.Key;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -58,16 +59,23 @@ public class JwtService {
   ) {
     Claims claims = Jwts.claims();
     claims.put("permissions" , userDetails.getAuthorities() );
-    return Jwts
-            .builder()
-            .setClaims(claims)
-            .setSubject(userDetails.getUsername())
-
-//            .setClaims(extraClaims)
-            .setIssuedAt(new Date(System.currentTimeMillis()))
-            .setExpiration(new Date(System.currentTimeMillis() + expiration))
-            .signWith(getSignInKey(), SignatureAlgorithm.HS256)
-            .compact();
+    return JWT.create().withIssuer("Gene-Authentication-Server")
+            .withSubject("Permission Token")
+            .withClaim("username" , userDetails.getUsername())
+            .withClaim("permissions" , authoritiesList(userDetails.getAuthorities()))
+            .withIssuedAt(new Date(System.currentTimeMillis()))
+            .withExpiresAt(new Date(new Date(System.currentTimeMillis()).getTime() + 100 * 60 * 1000))
+            .sign(Algorithm.HMAC256(secretKey));
+//    return Jwts
+//            .builder()
+//            .setClaims(claims)
+//            .setSubject(userDetails.getUsername())
+//
+////            .setClaims(extraClaims)
+//            .setIssuedAt(new Date(System.currentTimeMillis()))
+//            .setExpiration(new Date(System.currentTimeMillis() + expiration))
+//            .signWith(getSignInKey(), SignatureAlgorithm.HS256)
+//            .compact();
   }
 
   public boolean isTokenValid(String token, UserDetails userDetails) {
@@ -95,5 +103,13 @@ public class JwtService {
   private Key getSignInKey() {
     byte[] keyBytes = Decoders.BASE64.decode(secretKey);
     return Keys.hmacShaKeyFor(keyBytes);
+  }
+
+  private List<String> authoritiesList(Collection<? extends GrantedAuthority> collection) {
+    Set<String> authoritySet = new HashSet<>();
+    for (GrantedAuthority authority : collection) {
+      authoritySet.add(authority.getAuthority());
+    }
+    return new ArrayList<>(authoritySet);
   }
 }
