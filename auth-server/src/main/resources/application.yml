@@ -30,4 +30,7 @@ eureka:
     serviceUrl:
       defaultZone: http://eureka:password@localhost:8761/eureka
 
+keycloak:
+  tokenUrl: http://localhost:8089/auth/realms/gene-project/protocol/openid-connect/userinfo
+
 

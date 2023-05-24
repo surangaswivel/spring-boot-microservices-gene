@@ -1,24 +1,30 @@
 package com.gene.security.auth;
 
+import com.gene.security.demo.UserDetailsResponseDto;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.ws.rs.core.SecurityContext;
 import lombok.RequiredArgsConstructor;
-import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthenticationController {
+
+  @Value("${keycloak.tokenUrl}")
+  private String userInfoUrl;
+
+  private final RestTemplate restTemplate;
 
   private final AuthenticationService service;
 
@@ -44,50 +50,24 @@ public class AuthenticationController {
   }
 
   @GetMapping("/getAccessToken")
-  public  ResponseEntity<AuthenticationResponse>  getAccessToken(
-          HttpServletRequest request
-  ) {
-    System.out.println(" >>>>>>>>>>>>> " );
-    String email = "";
+  public  ResponseEntity<AuthenticationResponse>  getAccessToken(HttpServletRequest request) {
+    var userDetails = getUserDetails(request.getHeader("Authorization"));
+    AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+    authenticationRequest.setEmail(userDetails.getEmail());
+    return ResponseEntity.ok(service.authenticate(authenticationRequest));
+  }
 
+  private UserDetailsResponseDto getUserDetails(String token) {
     try {
-      // Create the URL object with the endpoint URL
-      URL url = new URL("http://localhost:8089/auth/realms/gene-project/protocol/openid-connect/userinfo");
-
-      // Create the HttpURLConnection object
-      HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-      // Set the request method to GET
-      connection.setRequestMethod("GET");
-
-      connection.setRequestProperty("Authorization", request.getHeader("Authorization"));
-
-      // Get the response code
-      int responseCode = connection.getResponseCode();
-      System.out.println("Response Code: " + responseCode);
-
-      // Read the response from the input stream
-      try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-        String line;
-        StringBuilder res = new StringBuilder();
-        while ((line = reader.readLine()) != null) {
-          res.append(line);
-        }
-        System.out.println("Response: " + res.toString());
-        JSONObject jsonObject = new JSONObject(res.toString());
-         email = jsonObject.getString("preferred_username");
-
-      }
-
-      // Disconnect the connection
-      connection.disconnect();
-    } catch (IOException e) {
-      e.printStackTrace();
+      HttpHeaders headers = new HttpHeaders();
+      headers.add("Authorization", token);
+      HttpEntity<String> entity = new HttpEntity<>(null, headers);
+      var responseBody = restTemplate.exchange(userInfoUrl, HttpMethod.GET, entity, UserDetailsResponseDto.class);
+      return Objects.requireNonNull(responseBody.getBody());
+    } catch (HttpClientErrorException e) {
+      throw new RuntimeException(e);
     }
 
-    AuthenticationRequest authenticationRequest = new AuthenticationRequest();
-    authenticationRequest.setEmail(email);
-    return ResponseEntity.ok(service.authenticate(authenticationRequest));
   }
 
 }
