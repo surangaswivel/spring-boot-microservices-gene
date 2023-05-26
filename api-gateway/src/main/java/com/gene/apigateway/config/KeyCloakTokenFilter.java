@@ -63,7 +63,8 @@ public class KeyCloakTokenFilter  implements WebFilter {
             var responseBody = restTemplate.exchange(accessTokenUrl, HttpMethod.GET, entity, TokenResponse.class);
             return Objects.requireNonNull(responseBody.getBody());
         } catch (HttpClientErrorException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
+            return new TokenResponse();
         }
     }
 }
