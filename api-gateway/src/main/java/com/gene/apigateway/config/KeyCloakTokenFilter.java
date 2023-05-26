@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -22,7 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-public class KeyCloakTokenFilter extends OncePerRequestFilter implements WebFilter {
+public class KeyCloakTokenFilter  implements WebFilter {
 
     private final String accessTokenUrl;
     @Autowired
@@ -35,23 +36,23 @@ public class KeyCloakTokenFilter extends OncePerRequestFilter implements WebFilt
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        String token = exchange.getRequest().getHeaders().getFirst("Authorization");
-        var tokenResponse = getAuthorizeToken(token);
-        ServerWebExchange originalExchange = exchange;
-        exchange.getRequest().mutate().header("Access_Token", "Bearer " + tokenResponse.getAccess_token());
+        if (shouldFilter(exchange.getRequest())) {
+            String token = exchange.getRequest().getHeaders().getFirst("Authorization");
+            var tokenResponse = getAuthorizeToken(token);
+            ServerWebExchange originalExchange = exchange;
+            exchange.getRequest().mutate().header("Access_Token", "Bearer " + tokenResponse.getAccess_token());
+
+        }
         return chain.filter(exchange);
     }
 
-    @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-    }
 
-    @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+
+    protected boolean shouldFilter(ServerHttpRequest request) {
         String[] requests = {"/api/doc-service/sayHelloPublic"};
         List<String> requestList = Arrays.asList(requests);
-        return requestList.contains(request.getServletPath());
+        return ! requestList.contains(request.getPath().toString());
     }
 
     private TokenResponse getAuthorizeToken(String keyCloakToken) {
