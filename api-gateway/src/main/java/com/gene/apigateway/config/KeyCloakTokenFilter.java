@@ -64,7 +64,8 @@ public class KeyCloakTokenFilter implements WebFilter {
             }
             throw new BadCredentialsException("The given token is invalid");
         } catch (HttpClientErrorException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
+            return new TokenResponse();
         }
     }
 }
