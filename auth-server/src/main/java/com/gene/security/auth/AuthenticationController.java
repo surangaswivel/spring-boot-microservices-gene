@@ -67,7 +67,6 @@ public class AuthenticationController {
     } catch (HttpClientErrorException e) {
       throw new RuntimeException(e);
     }
-
   }
 
 }
